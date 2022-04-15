@@ -6,11 +6,12 @@ const User = require('../models/user')
 
 const router = new express.Router()
 
-router.post('/tasks', auth, async (req, res)=>{
+router.post('/task', auth, async (req, res)=>{
     // const task = new Task(req.body)
     const task = new Task({
         ...req.body,
-        owner: req.user._id
+        owner: req.user._id,
+        name: req.user.name
     })
 
     try{
@@ -21,8 +22,40 @@ router.post('/tasks', auth, async (req, res)=>{
     }
 })
 
+
 //GET /tasks?completed=true
 //GET /tasks?limit = 10& skip=20
+router.get('/tasks/admin', async (req, res)=>{
+    const match = {}
+    const sort = {}
+
+    if(req.query.completed){
+        match.completed = req.query.completed === 'true'
+    }
+
+    if(req.query.sortBy){
+        const parts = req.query.sortBy.split(':')
+        sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
+    }
+
+    try{
+        // const task = await Task.find({owner:req.user._id})
+        
+        //alternatively, instead of the above
+        await req.user.populate({
+            path: 'tasks',
+            match,
+            options: {
+                limit: parseInt(req.query.limit),
+                skip: parseInt(req.query.skip),
+                sort
+            }
+        })
+        res.send(Task)
+    }catch(e){
+        res.status(500).send()
+    }
+})
 
 router.get('/tasks', auth, async (req, res)=>{
     const match = {}
@@ -71,6 +104,23 @@ router.get('/tasks/:id', auth, async (req, res)=>{
     }catch(e){
         res.status(500).send('error')
     }
+})
+
+router.get('/taskss', async(req, res)=>{
+    const user = await Task.find((err, docs)=>{
+        if(err){
+            console.log(err);
+        }else{
+            for(var user in docs){
+                console.log(user)
+            }
+        }
+    })
+})
+
+router.get('/alltasks', async(req, res)=>{
+    const task = await Task.find({})
+    res.send(task)
 })
 
 router.patch('/tasks/:id', auth, async(req, res)=>{

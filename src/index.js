@@ -1,30 +1,10 @@
-const { request } = require('express')
-const express = require('express')
-require('./db/mongoose')
-const userRouter = require('./routers/user')
-const taskRouter = require('./routers/task')
-
-const app=express()
-
+const app = require('./app')
 const port =process.env.PORT
 
-// app.use((req, res, next)=> {
-//     res.status(503).send('site in maintannace mode')
-// })
 
 
 
-app.use(express.json())
-app.use(userRouter)
-app.use(taskRouter)
-
-
-//without middleware: new request ==> run route handler
-
-//with middleware: new request -> do something -> run route handler
-
-
-app.listen(port, ()=>{
+app.listen(3000, ()=>{
     console.log('server is up and running on ' + port)
 })
 

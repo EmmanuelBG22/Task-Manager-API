@@ -3,6 +3,8 @@ const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const Task = require('./task')
+const Menu = require('./admin')
+const { string } = require('sharp/lib/is')
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -51,7 +53,14 @@ const userSchema = new mongoose.Schema({
     }],
     avatar: {
         type: Buffer
+    }, 
+    roles: [
+        {
+        type: String,
+        enum: ['User', 'Admin'],
+        required: true
     }
+]
 }, {
     timestamps: true
 })
@@ -74,6 +83,20 @@ userSchema.virtual('tasks', {
     foreignField: 'owner'
 })
 
+userSchema.virtual('tasks', {
+    ref: 'Task',
+    localField: 'name',
+    foreignField: 'name'
+})
+
+userSchema.virtual('menus', {
+    ref: 'Menu',
+    localField: 'name',
+    foreignField: 'name'
+})
+
+
+
 userSchema.methods.generateAuthToken = async function () {
     const user = this
     const token = jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRET)
@@ -84,6 +107,22 @@ userSchema.methods.generateAuthToken = async function () {
 
     return token
 }
+
+
+//geberate token for admin user
+userSchema.methods.generateAdminAuthToken = async function () {
+    const user = this
+    const token = jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRETS)
+    console.log(token)
+
+    user.tokens = user.tokens.concat({token})
+
+    await user.save()
+
+    return token
+}
+
+
 
 
 userSchema.statics.findByCredentials = async(email, password) =>{
@@ -131,6 +170,8 @@ const User = mongoose.model('User', userSchema)
 // })
 
 // me.save().then((me)=>console.log(me)).catch((error)=>{console.log('error', error)})
+
+
 
 
 module.exports = User
